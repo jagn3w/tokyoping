@@ -32,7 +32,7 @@ void run_instrumentation() {
 		for (int j = 0; j < num_repeats; j++) {
 			clock_t before = clock();
 			clock_t rtt = get_rtt(pack);
-			fprintf(pfile,"%d\n",rtt);
+			fprintf(pfile,"%d\n", CLOCKTOMS(rtt));
 
 			//To get rid of icmp load-balancing in the network
 			while (CLOCKTOMS(clock() - before) < gap_ms);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
 	if(argc < 2) {
 		printf("usage:\n");
-		printf("\t./tokyoping [-i | -u] -t timeoutms -g gapms -r numprepeats -f numflows -h hostip");
+		printf("\t./tokyoping [-i | -u] -t timeoutms -g gapms -r numrepeats -f numflows -h hostip");
 	}
 	int i = 1;
 

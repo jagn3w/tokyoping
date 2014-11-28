@@ -10,4 +10,4 @@ is a random sample of flow ids.
 A lot more is required to use this as an enterprise-level latency estimator.
 
 usage:
-	./tokyoping [-i | -u] -t timeoutms -g gapms -r numprepeats -f numflows -h hostip
+	./tokyoping [-i | -u] -t timeoutms -g gapms -r numrepeats -f numflows -h hostip
