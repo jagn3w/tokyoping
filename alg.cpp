@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <time.h>
 
+#define CLOCKTOMS(x) ((x)/1000)
 
 
-int num_flows, timeout_ms, gap_ms, num_repeats, num_flows, host_ip;
-std::string host;
+
+int num_flows, timeout_ms, gap_ms, num_repeats, num_flows;
+in_addr_t dst_ip;
+
+std::string dst;
 bool is_udp;
 
 
@@ -17,8 +21,8 @@ void run_instrumentation() {
 		char* pack;
 		if (is_udp) {
 			uint32_t flow = manager->get_new_srcport();
-			pack = get_udp_packet(flow);
-			pfile = fopen("UDP Trace of: "+host+" Timeout: "+itoa(timeout_ms)+" Gap: "+itoa(gap_ms)+" Repeats: "+itoa(repeats)+" Srcprt: ", 'a')
+			pack = get_ip_udp_probe(dst_ip, flow);
+			pfile = fopen("UDP Trace of: "+dst+" Timeout: "+itoa(timeout_ms)+" Gap: "+itoa(gap_ms)+" Repeats: "+itoa(repeats)+" Srcprt: ", 'a')
 		} /*else {
 
 			pack = get_icmp_packet(flow);
@@ -26,9 +30,12 @@ void run_instrumentation() {
 		}*/
 
 		for (int j = 0; j < num_repeats; j++) {
-			clock_t t = clock();
+			clock_t before = clock();
 			clock_t rtt = get_rtt(pack);
 			fprintf(pfile,"%d\n",rtt);
+
+			//To get rid of icmp load-balancing in the network
+			while (CLOCKTOMS(clock() - before) < gap_ms);
 		}
 
 		fflush(pfile);
@@ -64,7 +71,7 @@ int main(int argc, char *argv[]) {
 		} else if(strcmp(argv[i], "-h")) {
 			i++;
 			host (argv[i]);
-			host_ip = atoi(argv[i]);
+			dst_ip = inet_addr(argv[i]);
 		}
 		i++;
 	}
