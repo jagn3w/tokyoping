@@ -21,8 +21,10 @@ bool is_udp;
 void run_instrumentation() {
 	FILE * pfile;
 	flow_manager_t * manager = new flow_manager_t();
+	printf("instrumenting %d\n", num_flows);
 	for (int i = 0; i < num_flows; i++) {
-		
+
+		printf("instrumenting %d\n", i);
 		char* pack;
 		if (is_udp) {
 			uint16_t flow = manager->get_new_srcport();
@@ -35,6 +37,8 @@ void run_instrumentation() {
 			for (int j = 0; j < num_repeats; j++) {
 				clock_t before = clock();
 				clock_t rtt = get_rtt(pack, flow, timeout_ms);
+
+				printf("rtt: %d\n", (int) CLOCKTOMS(rtt));
 				if (rtt != -1) {
 					fprintf(pfile,"%d\n", (int) CLOCKTOMS(rtt));
 				}
@@ -58,30 +62,34 @@ void run_instrumentation() {
 
 int main(int argc, char *argv[]) {
 
+
+	printf("argc %d\n", argc);
 	if(argc < 2) {
 		printf("usage:\n");
-		printf("\t./tokyoping [-i | -u] -t timeoutms -g gapms -r numrepeats -f numflows -h hostip");
+		printf("\t./tokyoping [-i | -u] -t timeoutms -g gapms -r numrepeats -f numflows -h hostip\n");
 	}
 	int i = 1;
 
 	while(i < argc) {
-		if(strcmp(argv[i], "-i")) {
+		printf("arg %d is %s\n", i, argv[i]);
+		if(!strcmp(argv[i], "-i")) {
 			is_udp = false;
-		} else if(strcmp(argv[i], "-u")) {
+		} else if(!strcmp(argv[i], "-u")) {
 			is_udp = true;
-		} else if(strcmp(argv[i], "-t")) {
+		} else if(!strcmp(argv[i], "-t")) {
 			i++;
 			timeout_ms = atoi(argv[i]);
-		} else if(strcmp(argv[i], "-g")) {
+		} else if(!strcmp(argv[i], "-g")) {
 			i++;
 			gap_ms = atoi(argv[i]);
-		} else if(strcmp(argv[i], "-r")) {
+		} else if(!strcmp(argv[i], "-r")) {
 			i++;
 			num_repeats = atoi(argv[i]);
-		} else if(strcmp(argv[i], "-f")) {
+		} else if(!strcmp(argv[i], "-f")) {
+			printf("num_flows %d\n",  atoi(argv[i]));
 			i++;
 			num_flows = atoi(argv[i]);
-		} else if(strcmp(argv[i], "-h")) {
+		} else if(!strcmp(argv[i], "-h")) {
 			i++;
 			dst = argv[i];
 			dst_ip = inet_addr(argv[i]);
