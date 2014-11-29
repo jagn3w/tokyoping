@@ -1,7 +1,7 @@
 
 #include "flow_manager.h"
 
-uint16_t get_new_srcport() {
+uint16_t flow_manager_t::get_new_srcport() {
 	uint16_t candidate;
 	do{
 		candidate = (rand() % 55535) + 10000;
@@ -9,4 +9,8 @@ uint16_t get_new_srcport() {
 
 	used_udp_srcprts.insert(candidate);
 	return candidate;
+}
+
+flow_manager_t::flow_manager_t() {
+	std::set<uint16_t> used_udp_srcprts;
 }

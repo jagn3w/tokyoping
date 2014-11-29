@@ -1,6 +1,9 @@
 #ifndef TOKYOPACKET
 #define TOKYOPACKET
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 char* get_ip_udp_probe(in_addr_t dst_ip, uint16_t srcprt);
 
 
