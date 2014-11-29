@@ -3,6 +3,7 @@
 
 #define DST_PORT 33434 
 #include <string.h>
+#include "packet.h"
 
 in_addr_t get_src_ip();
 

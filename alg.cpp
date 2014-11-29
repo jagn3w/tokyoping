@@ -40,6 +40,7 @@ void run_instrumentation() {
 				clock_t rtt = get_rtt(pack, flow, timeout_ms);
 
 				printf("rtt: %d\n", (int) CLOCKTOMS(rtt));
+				
 				if (rtt != -1) {
 					fprintf(pfile,"%d\n", (int) CLOCKTOMS(rtt));
 				}
