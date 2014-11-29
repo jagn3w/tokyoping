@@ -2,7 +2,9 @@
 #define TOKYOFLOWMANAGER
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <set>
+#include <stdint.h>
 
 class flow_manager_t
 {

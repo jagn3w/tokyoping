@@ -3,7 +3,8 @@
 #include <time.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <string>
+#include <string.h>
+#include <iostream>
 
 #include "flow_manager.h"
 #include "packet.h"
