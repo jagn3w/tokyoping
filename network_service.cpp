@@ -48,8 +48,14 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
     timeout.tv_sec = timeout_ms / 1000;
     timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
-	int send_sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-	int recv_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    int send_sock, recv_sock;
+
+	if( (send_sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) < 0) {
+		perror ("The following error occurred");
+	}
+	recv_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
+	printf("socks %d %d\n", send_sock, recv_sock);
 
 
 	// TODO: Do we really need to create our own IP headers?
@@ -57,6 +63,7 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 	int hdrincl=1;
 	if (setsockopt(send_sock, IPPROTO_IP, IP_HDRINCL,&hdrincl,sizeof(hdrincl)) < 0) {
     	printf("error disabling header\n");
+    	perror ("The following error occurred");
     	return -1;
 	}
 
@@ -64,11 +71,13 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 	if (setsockopt (recv_sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout)) < 0) {
 		printf("Couldn't set timeout");
+		perror ("The following error occurred");
 		return -1;
 	}
 
-	if (sendto(send_sock, pack, sizeof(iphdr)+sizeof(udphdr), 0, (struct sockaddr*) &din, sizeof(din)) < 0) {
+	if (sendto(send_sock, pack, sizeof(iphdr) + sizeof(udphdr), 0, (struct sockaddr*) &din, sizeof(din)) < 0) {
 		printf("Could not send packet\n");
+		perror ("The following error occurred");
 		return -1;
 	}
 	send_time = clock();
@@ -90,6 +99,9 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 			correct_response = true;
 		}
 	} while(!correct_response);
+
+	close(send_sock);
+	close(recv_sock);
 
 	return recv_time - send_time;
 }
