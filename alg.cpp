@@ -31,13 +31,13 @@ void run_instrumentation() {
 			uint16_t flow = manager->get_new_srcport();
 			pack = get_ip_udp_probe(dst_ip, flow);
 
-			std::string name ("UDP Trace of: "+dst+" Timeout: "+std::to_string(timeout_ms)+" Gap: "+std::to_string(gap_ms)+" Repeats: "+std::to_string(num_repeats)+" Srcprt: ");
+			std::string name ("UDP Trace of: "+dst+" Timeout: "+std::to_string(timeout_ms)+" Gap: "+std::to_string(gap_ms)+" Repeats: "+std::to_string(num_repeats)+" Srcprt: "+std::to_string(flow));
 
 			pfile = fopen(name.c_str(), "a");
 
 			for (int j = 0; j < num_repeats; j++) {
 				clock_t before = clock();
-				clock_t rtt = get_rtt(pack, flow, timeout_ms);
+				clock_t rtt = get_udp_rtt(pack, flow, timeout_ms);
 
 				printf("rtt: %d\n", (int) CLOCKTOMS(rtt));
 				
@@ -49,8 +49,6 @@ void run_instrumentation() {
 				while (CLOCKTOMS(clock() - before) < gap_ms);
 			}
 		} /*else {
-
-			//TODO: Add ICMP instrumenting
 			pack = get_icmp_packet(flow);
 			pfile = fopen()
 		}*/

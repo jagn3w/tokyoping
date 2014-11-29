@@ -31,7 +31,7 @@ in_addr_t get_src_ip(){
 }
 
 
-clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
+clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 
 	struct iphdr* ip_pack = (struct iphdr*) pack;
 
@@ -76,7 +76,6 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 	}
 
 	if (sendto(send_sock, pack, sizeof(iphdr) + sizeof(udphdr), 0, (struct sockaddr*) &din, sizeof(din)) < 0) {
-		printf("Could not send packet\n");
 		perror ("The following error occurred");
 		return -1;
 	}
@@ -89,7 +88,8 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 		struct sockaddr_in rcv_addr;
 
 		int len = sizeof(rcv_addr);
-		if(recvfrom(recv_sock, buf, 100, 0, (struct sockaddr*) &recv_sock, (socklen_t *) &len) <= 0) {
+		if(recvfrom(recv_sock, buf, 100, 0, (struct sockaddr*) &recv_sock, (socklen_t *) &len) < 0) {
+			close(recv_sock);
 			printf("Received nothing\n");
 			return -1;
 		}
@@ -105,3 +105,15 @@ clock_t get_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 
 	return recv_time - send_time;
 }
+
+clock_t get_icmp_rtt(char* pack) {
+	
+}
+
+
+
+
+
+
+
+
