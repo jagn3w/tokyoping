@@ -15,12 +15,13 @@ in_addr_t get_src_ip(){
 	getifaddrs (&ifap);
 
 	struct sockaddr_in *sa;
-	std::string prefix("192");
+	std::string prefix("10.");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr->sa_family==AF_INET) {
             sa = (struct sockaddr_in *) ifa->ifa_addr;
             std::string addr (inet_ntoa(sa->sin_addr));
+            printf("found addr %s\n", addr.c_str());
             if (!addr.compare(0, prefix.size(), prefix)) {
             	return sa->sin_addr.s_addr;
             }
@@ -34,6 +35,9 @@ in_addr_t get_src_ip(){
 clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 
 	struct iphdr* ip_pack = (struct iphdr*) pack;
+
+	char buf[4096];
+	memset(buf, 0, 4096);
 
 	struct sockaddr_in din;
 	din.sin_family = AF_INET;
@@ -82,21 +86,26 @@ clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 	send_time = clock();
 
 	do {
-		char buf[100];
-		memset(buf, 0, 100);
+		
 
 		struct sockaddr_in rcv_addr;
 
 		int len = sizeof(rcv_addr);
-		if(recvfrom(recv_sock, buf, 100, 0, (struct sockaddr*) &recv_sock, (socklen_t *) &len) < 0) {
+		printf("recv %d\n", recv_sock);
+		if(recvfrom(recv_sock, buf, 4096, 0, (struct sockaddr*) &recv_sock, (socklen_t *) &len) < 0) {
+			perror("Received nothing\n");
 			close(recv_sock);
-			printf("Received nothing\n");
 			return -1;
 		}
 		recv_time = clock();
 
 		if (rcv_addr.sin_addr.s_addr == din.sin_addr.s_addr) {
 			correct_response = true;
+		} else {
+			printf("Was wrong %s\n", inet_ntoa(rcv_addr.sin_addr));
+			printf("Was wrong %s\n", inet_ntoa(din.sin_addr));
+			printf("Was wrong %d\n", rcv_addr.sin_addr.s_addr);
+			printf("Was wrong %d\n", din.sin_addr.s_addr);
 		}
 	} while(!correct_response);
 
@@ -107,7 +116,7 @@ clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 }
 
 clock_t get_icmp_rtt(char* pack) {
-	
+	return 0;
 }
 
 

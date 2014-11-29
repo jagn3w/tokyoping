@@ -52,3 +52,7 @@ char* get_ip_udp_probe(in_addr_t dst_ip, uint16_t srcprt) {
 
 	return buffer;
 }
+
+char* get_icmp_echo_probe(){
+	return 0;
+}
