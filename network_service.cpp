@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string>
+#include <chrono>
 
 #include "network_service.h"
-
 
 in_addr_t get_src_ip(){
 
@@ -15,13 +15,15 @@ in_addr_t get_src_ip(){
 	getifaddrs (&ifap);
 
 	struct sockaddr_in *sa;
-	std::string prefix("10.");
+
+	//TODO: This is dependent on the network we're on, figure out a smarter way
+	std::string prefix("172.");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr->sa_family==AF_INET) {
             sa = (struct sockaddr_in *) ifa->ifa_addr;
             std::string addr (inet_ntoa(sa->sin_addr));
-            printf("found addr %s\n", addr.c_str());
+            //printf("found addr %s\n", addr.c_str());
             if (!addr.compare(0, prefix.size(), prefix)) {
             	return sa->sin_addr.s_addr;
             }
@@ -32,19 +34,19 @@ in_addr_t get_src_ip(){
 }
 
 
-clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
+long double get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 
 	struct iphdr* ip_pack = (struct iphdr*) pack;
 
-	char buf[4096];
+	char * buf = (char*) malloc(4096);
 	memset(buf, 0, 4096);
 
 	struct sockaddr_in din;
 	din.sin_family = AF_INET;
 	din.sin_port = DST_PORT;
 	din.sin_addr.s_addr = ip_pack->ip_dst;
-	clock_t send_time;
-	clock_t recv_time;
+	unsigned long send_time;
+	unsigned long recv_time;
 
 	bool correct_response;
 
@@ -57,16 +59,16 @@ clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 	if( (send_sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) < 0) {
 		perror ("The following error occurred");
 	}
-	recv_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if( (recv_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
+		perror ("The following error occurred");
+	}
 
-	printf("socks %d %d\n", send_sock, recv_sock);
 
 
 	// TODO: Do we really need to create our own IP headers?
 	// we are creating our own IP headers
 	int hdrincl=1;
 	if (setsockopt(send_sock, IPPROTO_IP, IP_HDRINCL,&hdrincl,sizeof(hdrincl)) < 0) {
-    	printf("error disabling header\n");
     	perror ("The following error occurred");
     	return -1;
 	}
@@ -74,48 +76,56 @@ clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {
 	// Set timeout for the receive socket
 	if (setsockopt (recv_sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout)) < 0) {
-		printf("Couldn't set timeout");
 		perror ("The following error occurred");
 		return -1;
 	}
 
+	send_time = std::chrono::duration_cast<std::chrono::microseconds >(
+    				std::chrono::high_resolution_clock::now().time_since_epoch()
+  				).count();
 	if (sendto(send_sock, pack, sizeof(iphdr) + sizeof(udphdr), 0, (struct sockaddr*) &din, sizeof(din)) < 0) {
 		perror ("The following error occurred");
 		return -1;
 	}
-	send_time = clock();
 
 	do {
-		
+		struct sockaddr_in * rcv_addr = (sockaddr_in*) malloc(sizeof(sockaddr_in));
+		socklen_t* len = (socklen_t*) malloc(sizeof(socklen_t));
 
-		struct sockaddr_in rcv_addr;
-
-		int len = sizeof(rcv_addr);
-		printf("recv %d\n", recv_sock);
-		if(recvfrom(recv_sock, buf, 4096, 0, (struct sockaddr*) &recv_sock, (socklen_t *) &len) < 0) {
+		if(recvfrom(recv_sock, buf, 4096, 0, (struct sockaddr*) rcv_addr, (socklen_t *) len) < 0) {
 			perror("Received nothing\n");
+
+			free(len);
+			free(rcv_addr);
+			free(buf);
+			close(send_sock);
 			close(recv_sock);
 			return -1;
 		}
-		recv_time = clock();
 
-		if (rcv_addr.sin_addr.s_addr == din.sin_addr.s_addr) {
+		recv_time = std::chrono::duration_cast<std::chrono::microseconds >(
+    				std::chrono::high_resolution_clock::now().time_since_epoch()
+  				).count();
+
+		iphdr* hdr = (iphdr*) buf;
+
+		if (hdr->ip_src == din.sin_addr.s_addr) {
 			correct_response = true;
-		} else {
-			printf("Was wrong %s\n", inet_ntoa(rcv_addr.sin_addr));
-			printf("Was wrong %s\n", inet_ntoa(din.sin_addr));
-			printf("Was wrong %d\n", rcv_addr.sin_addr.s_addr);
-			printf("Was wrong %d\n", din.sin_addr.s_addr);
 		}
+
+		free(len);
+		free(rcv_addr);
+
 	} while(!correct_response);
 
 	close(send_sock);
 	close(recv_sock);
+	free(buf);
 
-	return recv_time - send_time;
+	return ((double)(recv_time - send_time))/1000;
 }
 
-clock_t get_icmp_rtt(char* pack) {
+unsigned long get_icmp_rtt(char* pack) {
 	return 0;
 }
 

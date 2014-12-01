@@ -7,7 +7,7 @@
 
 in_addr_t get_src_ip();
 
-clock_t get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms);
+long double get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms);
 clock_t get_icmp_rtt(char* pack);
 
 #endif

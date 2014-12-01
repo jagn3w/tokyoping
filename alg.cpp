@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <iostream>
+#include <chrono>
 
 #include "flow_manager.h"
 #include "packet.h"
@@ -22,10 +23,8 @@ bool is_udp;
 void run_instrumentation() {
 	FILE * pfile;
 	flow_manager_t * manager = new flow_manager_t();
-	printf("instrumenting %d\n", num_flows);
 	for (int i = 0; i < num_flows; i++) {
 
-		printf("instrumenting %d\n", i);
 		char* pack;
 		if (is_udp) {
 			uint16_t flow = manager->get_new_srcport();
@@ -36,17 +35,21 @@ void run_instrumentation() {
 			pfile = fopen(name.c_str(), "a");
 
 			for (int j = 0; j < num_repeats; j++) {
-				clock_t before = clock();
-				clock_t rtt = get_udp_rtt(pack, flow, timeout_ms);
+				std::chrono::milliseconds before = std::chrono::duration_cast<std::chrono::milliseconds >(
+    				std::chrono::high_resolution_clock::now().time_since_epoch()
+  				);
+				long double rtt = get_udp_rtt(pack, flow, timeout_ms);
 
-				printf("rtt: %d\n", (int) CLOCKTOMS(rtt));
+				printf("rtt: %Lf in ms\n", rtt);
 				
 				if (rtt != -1) {
-					fprintf(pfile,"%d\n", (int) CLOCKTOMS(rtt));
+					fprintf(pfile,"%Lf\n", rtt);
 				}
 
 				//To get rid of icmp load-balancing in the network
-				while (CLOCKTOMS(clock() - before) < gap_ms);
+				while ((std::chrono::duration_cast<std::chrono::milliseconds >(
+    				std::chrono::high_resolution_clock::now().time_since_epoch()
+  					).count() - before.count()) < gap_ms);
 			}
 		} /*else {
 			pack = get_icmp_packet(flow);
@@ -62,8 +65,6 @@ void run_instrumentation() {
 
 int main(int argc, char *argv[]) {
 
-
-	printf("argc %d\n", argc);
 	if(argc < 2) {
 		printf("usage:\n");
 		printf("\t./tokyoping [-i | -u] -t timeoutms -g gapms -r numrepeats -f numflows -h hostip\n");
@@ -71,7 +72,6 @@ int main(int argc, char *argv[]) {
 	int i = 1;
 
 	while(i < argc) {
-		printf("arg %d is %s\n", i, argv[i]);
 		if(!strcmp(argv[i], "-i")) {
 			is_udp = false;
 		} else if(!strcmp(argv[i], "-u")) {
@@ -86,7 +86,6 @@ int main(int argc, char *argv[]) {
 			i++;
 			num_repeats = atoi(argv[i]);
 		} else if(!strcmp(argv[i], "-f")) {
-			printf("num_flows %d\n",  atoi(argv[i]));
 			i++;
 			num_flows = atoi(argv[i]);
 		} else if(!strcmp(argv[i], "-h")) {
