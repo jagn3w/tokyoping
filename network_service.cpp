@@ -8,7 +8,9 @@
 
 #include "network_service.h"
 
-in_addr_t get_src_ip(){
+
+//TODO: Revisit by matching to interface. Is a command line arg now.
+/*in_addr_t get_src_ip(){
 
 	struct ifaddrs *ifap, *ifa;
 
@@ -16,7 +18,7 @@ in_addr_t get_src_ip(){
 
 	struct sockaddr_in *sa;
 
-	//TODO: This is dependent on the network we're on, figure out a smarter way
+	
 	std::string prefix("172.");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
@@ -31,7 +33,7 @@ in_addr_t get_src_ip(){
     }
     printf("Couldn't find local addr\n");
     return -1;
-}
+}*/
 
 
 long double get_udp_rtt(char* pack, uint16_t src_port, int timeout_ms) {

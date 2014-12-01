@@ -16,6 +16,7 @@
 
 int num_flows, timeout_ms, gap_ms, num_repeats;
 in_addr_t dst_ip;
+in_addr_t src_ip;
 
 std::string dst;
 bool is_udp;
@@ -28,7 +29,7 @@ void run_instrumentation() {
 		char* pack;
 		if (is_udp) {
 			uint16_t flow = manager->get_new_srcport();
-			pack = get_ip_udp_probe(dst_ip, flow);
+			pack = get_ip_udp_probe(dst_ip, src_ip, flow);
 
 			std::string name ("UDP Trace of: "+dst+" Timeout: "+std::to_string(timeout_ms)+" Gap: "+std::to_string(gap_ms)+" Repeats: "+std::to_string(num_repeats)+" Srcprt: "+std::to_string(flow));
 
@@ -88,10 +89,13 @@ int main(int argc, char *argv[]) {
 		} else if(!strcmp(argv[i], "-f")) {
 			i++;
 			num_flows = atoi(argv[i]);
-		} else if(!strcmp(argv[i], "-h")) {
+		} else if(!strcmp(argv[i], "-d")) {
 			i++;
 			dst = argv[i];
 			dst_ip = inet_addr(argv[i]);
+		} else if(!strcmp(argv[i], "-h")) {
+			i++;
+			src_ip = inet_addr(argv[i]);
 		}
 		i++;
 	}

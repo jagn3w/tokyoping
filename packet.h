@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "network_service.h"
 
-char* get_ip_udp_probe(in_addr_t dst_ip, uint16_t srcprt);
+char* get_ip_udp_probe(in_addr_t dst_ip, in_addr_t src_ip, uint16_t srcprt);
 
 
 typedef struct iphdr {

@@ -18,7 +18,7 @@ void init_udphdr(struct udphdr* hdr, uint16_t srcprt) {
 	hdr->udp_chk = 0; // can be omitted, and we want to. remember this nonsense? :)
 }
 
-void init_iphdr(struct iphdr* hdr, in_addr_t dst_ip) {
+void init_iphdr(struct iphdr* hdr, in_addr_t dst_ip, in_addr_t src_ip) {
 	hdr->ip_hdr_len = 5;
 	hdr->ip_version = 4;   
 
@@ -37,18 +37,18 @@ void init_iphdr(struct iphdr* hdr, in_addr_t dst_ip) {
 	
 
 	//! IP source address (in network format).
-	hdr->ip_src = get_src_ip();
+	hdr->ip_src = src_ip;
 	//! IP destination address (in network format).
 	hdr->ip_dst = dst_ip;
 
 	hdr->ip_chk = ip_chksum((unsigned short *)hdr, hdr->ip_len);
 }
 
-char* get_ip_udp_probe(in_addr_t dst_ip, uint16_t srcprt) {
+char* get_ip_udp_probe(in_addr_t dst_ip, in_addr_t src_ip, uint16_t srcprt) {
 	char * buffer = (char*) malloc(sizeof(iphdr)+sizeof(udphdr));
 
 	init_udphdr((struct udphdr*) (buffer + sizeof(iphdr)), srcprt);
-	init_iphdr((struct iphdr* ) buffer, dst_ip);
+	init_iphdr((struct iphdr* ) buffer, dst_ip, src_ip);
 
 	return buffer;
 }
