@@ -11,9 +11,6 @@
 #include "packet.h"
 #include "network_service.h"
 
-#define CLOCKTOMS(x) ((x)/1000)
-
-
 int num_flows, timeout_ms, gap_ms, num_repeats;
 in_addr_t dst_ip;
 in_addr_t src_ip;
@@ -27,10 +24,10 @@ void run_instrumentation() {
 	for (int i = 0; i < num_flows; i++) {
 
 		char* pack;
+		uint16_t flow = manager->get_new_srcport();
 		if (is_udp) {
-			uint16_t flow = manager->get_new_srcport();
-			pack = get_ip_udp_probe(dst_ip, src_ip, flow);
 
+			pack = get_ip_udp_probe(dst_ip, src_ip, flow);
 			std::string name ("UDP Trace of: "+dst+" Timeout: "+std::to_string(timeout_ms)+" Gap: "+std::to_string(gap_ms)+" Repeats: "+std::to_string(num_repeats)+" Srcprt: "+std::to_string(flow));
 
 			pfile = fopen(name.c_str(), "a");
@@ -41,7 +38,7 @@ void run_instrumentation() {
   				);
 				long double rtt = get_udp_rtt(pack, flow, timeout_ms);
 
-				printf("rtt: %Lf in ms\n", rtt);
+				printf("Srcprt: %d rtt: %Lf in ms\n", flow, rtt);
 				
 				if (rtt != -1) {
 					fprintf(pfile,"%Lf\n", rtt);
@@ -52,10 +49,30 @@ void run_instrumentation() {
     				std::chrono::high_resolution_clock::now().time_since_epoch()
   					).count() - before.count()) < gap_ms);
 			}
-		} /*else {
-			pack = get_icmp_packet(flow);
-			pfile = fopen()
-		}*/
+		} else {
+			pack = get_icmp_echo_probe(dst_ip, src_ip, flow);
+			std::string name ("ICMP Trace of: "+dst+" Timeout: "+std::to_string(timeout_ms)+" Gap: "+std::to_string(gap_ms)+" Repeats: "+std::to_string(num_repeats)+" Srcprt: "+std::to_string(flow));
+
+			pfile = fopen(name.c_str(), "a");
+
+			for (int j = 0; j < num_repeats; j++) {
+				std::chrono::milliseconds before = std::chrono::duration_cast<std::chrono::milliseconds >(
+    				std::chrono::high_resolution_clock::now().time_since_epoch()
+  				);
+				long double rtt = get_icmp_rtt(pack, flow, timeout_ms);
+
+				printf("Id: %d rtt: %Lf in ms\n", flow, rtt);
+				
+				if (rtt != -1) {
+					fprintf(pfile,"%Lf\n", rtt);
+				}
+
+				//To get rid of icmp load-balancing in the network
+				while ((std::chrono::duration_cast<std::chrono::milliseconds >(
+    				std::chrono::high_resolution_clock::now().time_since_epoch()
+  					).count() - before.count()) < gap_ms);
+  			}
+		}
 
 		
 

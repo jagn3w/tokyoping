@@ -8,6 +8,8 @@
 
 char* get_ip_udp_probe(in_addr_t dst_ip, in_addr_t src_ip, uint16_t srcprt);
 
+char* get_icmp_echo_probe(in_addr_t dst_ip, in_addr_t src_ip, uint16_t identifier);
+
 
 typedef struct iphdr {
 
@@ -41,5 +43,13 @@ typedef struct udphdr {
 	uint16_t udp_len;
 	uint16_t udp_chk;
 } __attribute__ ((packed)) udphdr;
+
+typedef struct icmphdr {
+	uint8_t type;		/* message type */
+	uint8_t code;		/* type sub-code */
+	u_int16_t checksum;
+	u_int16_t	id;
+	u_int16_t	sequence;
+} __attribute__((packed)) icmphdr;
 
 #endif
